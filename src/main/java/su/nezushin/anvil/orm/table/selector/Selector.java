@@ -26,15 +26,15 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
     }
 
     protected Entry<String, OrderBy> orderBy;
-    protected Map<String, Object> where = new HashMap<>();
+    protected List<Entry<String, Object>> where = new ArrayList<>();
     protected List<String> whereNull = new ArrayList<>();
     protected List<String> whereNotNull = new ArrayList<>();
     protected List<Entry<String, List<Object>>> whereRaw = new ArrayList<>();
-    protected Map<String, Entry<ComparisonOperator, Object>> whereOperator = new HashMap<>();
-    protected Map<String, Object> notWhere = new HashMap<>();
-    protected Map<String, Entry<Object, Object>> between = new HashMap<>();
-    protected Map<String, Entry<Object, Object>> notBetween = new HashMap<>();
-    protected Map<String, Object> like = new HashMap<>();
+    protected List<Entry<String, Entry<ComparisonOperator, Object>>> whereOperator = new ArrayList<>();
+    protected List<Entry<String, Object>> notWhere = new ArrayList<>();
+    protected List<Entry<String, Entry<Object, Object>>> between = new ArrayList<>();
+    protected List<Entry<String, Entry<Object, Object>>> notBetween = new ArrayList<>();
+    protected List<Entry<String, Object>> like = new ArrayList<>();
     protected List<SimpleSelector<T>> selectors = new ArrayList<>();
     protected int limit = -1;
     protected CombinationOperator combinationOperator = CombinationOperator.AND;
@@ -85,7 +85,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
 
     public R where(String parm, Object obj) {
         if (parm == null) throw new IllegalArgumentException("Parm cannot be null");
-        where.put(parm, obj);
+        where.add(new SimpleEntry<>(parm, obj));
 
         return (R) this;
     }
@@ -95,7 +95,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
 
         if (operator == null) throw new IllegalArgumentException("ComparisonOperator cannot be null");
 
-        whereOperator.put(parm, new SimpleEntry<ComparisonOperator, Object>(operator, obj));
+        whereOperator.add(new SimpleEntry<>(parm, new SimpleEntry<ComparisonOperator, Object>(operator, obj)));
         return (R) this;
     }
 
@@ -109,13 +109,13 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
         if (operator == null) throw new IllegalArgumentException("Illegal ComparisonOperator: " + stringOperator);
 
 
-        whereOperator.put(parm, new SimpleEntry<ComparisonOperator, Object>(operator, obj));
+        whereOperator.add(new SimpleEntry<>(parm, new SimpleEntry<ComparisonOperator, Object>(operator, obj)));
         return (R) this;
     }
 
     public R notWhere(String parm, Object obj) {
         if (parm == null) throw new IllegalArgumentException("Parm cannot be null");
-        notWhere.put(parm, obj);
+        notWhere.add(new SimpleEntry<>(parm, obj));
 
         return (R) this;
     }
@@ -123,14 +123,14 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
     public R between(String parm, Object obj1, Object obj2) {
         if (parm == null) throw new IllegalArgumentException("Parm cannot be null");
         if (obj1 == null || obj2 == null) throw new IllegalArgumentException("Objects cannot be null");
-        between.put(parm, new SimpleEntry<>(obj1, obj2));
+        between.add(new SimpleEntry<>(parm, new SimpleEntry<>(obj1, obj2)));
         return (R) this;
     }
 
     public R like(String parm, Object obj) {
         if (parm == null) throw new IllegalArgumentException("Parm cannot be null");
         if (obj == null) throw new IllegalArgumentException("Object cannot be null");
-        like.put(parm, obj);
+        like.add(new SimpleEntry<>(parm, obj));
 
         return (R) this;
     }
@@ -139,7 +139,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
         if (parm == null) throw new IllegalArgumentException("Parm cannot be null");
         if (obj1 == null || obj2 == null) throw new IllegalArgumentException("Objects cannot be null");
 
-        notBetween.put(parm, new SimpleEntry<>(obj1, obj2));
+        notBetween.add(new SimpleEntry<>(parm, new SimpleEntry<>(obj1, obj2)));
         return (R) this;
     }
 
@@ -179,7 +179,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
                 list.add(new RawPSStorage(value, positionPointer += 1));
         }
 
-        for (Entry<String, Object> e : where.entrySet()) {
+        for (Entry<String, Object> e : where) {
             String key = e.getKey();
 
             Object value = e.getValue();
@@ -191,7 +191,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
 
         }
 
-        for (Entry<String, Entry<ComparisonOperator, Object>> e : whereOperator.entrySet()) {
+        for (Entry<String, Entry<ComparisonOperator, Object>> e : whereOperator) {
             String key = e.getKey();
             ComparisonOperator co = e.getValue().getKey();
             Object obj = e.getValue().getValue();
@@ -204,7 +204,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
 
         }
 
-        for (Entry<String, Object> e : notWhere.entrySet()) {
+        for (Entry<String, Object> e : notWhere) {
             String key = e.getKey();
 
             Object value = e.getValue();
@@ -216,7 +216,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
             list.add(new ColumnPSStorage(field.getValue(), value, positionPointer += 1, field.getKey().getType()));
         }
 
-        for (Entry<String, Entry<Object, Object>> e : between.entrySet()) {
+        for (Entry<String, Entry<Object, Object>> e : between) {
             String key = e.getKey();
             Object obj1 = e.getValue().getKey();
             Object obj2 = e.getValue().getValue();
@@ -232,7 +232,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
 
         }
 
-        for (Entry<String, Entry<Object, Object>> e : notBetween.entrySet()) {
+        for (Entry<String, Entry<Object, Object>> e : notBetween) {
             String key = e.getKey();
             Object obj1 = e.getValue().getKey();
             Object obj2 = e.getValue().getValue();
@@ -248,7 +248,7 @@ public abstract class Selector<T extends AnvilORMSerializable, R extends Selecto
 
         }
 
-        for (Entry<String, Object> e : like.entrySet()) {
+        for (Entry<String, Object> e : like) {
             String key = e.getKey();
 
             Object value = e.getValue();

@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="AnvilORM:jar">
+    <output-path>F:/minecraft-servers/v3-tests/plugins/</output-path>
+    <root id="archive" name="AnvilORM.jar">
+      <element id="module-output" name="AnvilORM.main" />
+      <element id="dir-copy" path="$PROJECT_DIR$/src/main/resources" />
+    </root>
+  </artifact>
+</component>

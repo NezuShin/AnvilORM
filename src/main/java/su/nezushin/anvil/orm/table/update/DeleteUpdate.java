@@ -15,7 +15,7 @@ public class DeleteUpdate<T extends AnvilORMSerializable> extends Selector<T, De
         super(table);
     }
 
-    public int compete() {
+    public int complete(){
         return table.synchronize(() -> {
             Connection c = table.getConnection();
             try (PreparedStatement ps = generateStatement("DELETE FROM " + table.getTableName(), 0, new ArrayList<>(), c);) {
@@ -32,6 +32,11 @@ public class DeleteUpdate<T extends AnvilORMSerializable> extends Selector<T, De
                 }
             }
         });
+    }
+
+    @Deprecated(forRemoval = true)
+    public int compete() {//typo :(
+        return this.complete();
     }
 
 }

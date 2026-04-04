@@ -1,4 +1,4 @@
 name: AnvilORM
-version: '1.0-SNAPSHOT'
+version: '1.0.1'
 main: su.nezushin.anvil.AnvilAPI
 api-version: '1.21'

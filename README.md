@@ -4,6 +4,12 @@ Object Relational Mapping tool designed to simplify the process of developing pl
 
 ## Installation
 
+- Download jar from [releases](https://github.com/NezuShin/AnvilORM/releases) and put it to the server's plugins directory.
+- Restart the server
+- No configuration is needed.
+
+## Using as dependency
+
 Currently, installation via a Maven repository is not available. To use this library, download the JAR file from the releases page or build it yourself using Gradle. Then add it as a local dependency by including the following code snippet in your `build.gradle` file:
 
 ```groovy
@@ -132,9 +138,9 @@ ormTable.update().replace(Lists.newArrayList(
 
 ```java
 //DELETE FROM my_table_name WHERE (`id`=?);
-int rowsChanged = ormTable.delete().where("id", 1).compete();
+int rowsChanged = ormTable.delete().where("id", 1).complete();
 
 
 // DELETE FROM my_table_name LIMIT 1;
-rowsChanged = ormTable.delete().limit(1).compete();
+rowsChanged = ormTable.delete().limit(1).complete();
 ```

@@ -109,6 +109,11 @@ int rows = ormTable.query().combination(CombinationOperator.OR).where((query) ->
 
 //SELECT * FROM my_table_name LIMIT 100;
 List<ExampleAnvilORMClass> firstHundredRows = ormTable.query().limit(100).completeAsList();
+
+
+//SELECT `id`, `user_name` FROM my_table_name WHERE (`id`=1);
+List<Map<String, Object>> rows = ormTable.query().columns("id", "user_name").where("id", 1).completeAsMaps();
+Object userName = rows.isEmpty() ? null : rows.get(0).get("user_name");
 ```
 
 #### 4. Updating Records (`UPDATE SET`)

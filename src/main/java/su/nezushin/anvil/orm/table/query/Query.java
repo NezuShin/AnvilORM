@@ -5,11 +5,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -134,6 +137,38 @@ public class Query<T extends AnvilORMSerializable> extends Selector<T, Query<T>>
                     return rs.getInt(1);
                 }
                 return 0;
+            } catch (Throwable e) {
+                throw new AnvilORMRuntimeException(e);
+            } finally {
+                if (table.needCloseConnection()) {
+                    try {
+                        c.close();
+                    } catch (Exception e2) {
+                    }
+                }
+            }
+        });
+    }
+
+    public List<Map<String, Object>> completeAsMaps() {
+        return table.synchronize(() -> {
+            Connection c = table.getConnection();
+            try (PreparedStatement ps = generateStatement("SELECT " + columns + " FROM " + table.getTableName(), 0, new ArrayList<>(), c);
+                 ResultSet rs = ps.executeQuery();) {
+
+                ResultSetMetaData meta = rs.getMetaData();
+                int columnCount = meta.getColumnCount();
+                List<Map<String, Object>> rows = new ArrayList<>();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        row.put(meta.getColumnLabel(i), rs.getObject(i));
+                    }
+                    rows.add(row);
+                }
+
+                return rows;
             } catch (Throwable e) {
                 throw new AnvilORMRuntimeException(e);
             } finally {

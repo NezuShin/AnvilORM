@@ -7,8 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import su.nezushin.anvil.orm.table.SqlColumn;
 import su.nezushin.anvil.orm.table.AnvilORMSerializable;
@@ -19,6 +22,7 @@ import su.nezushin.anvil.orm.table.selector.Selector;
 public class Query<T extends AnvilORMSerializable> extends Selector<T, Query<T>> {
 
     protected String columns = "*";
+    protected Set<String> selectedColumns = null;
 
     public Query(AnvilORMTable<T> table) {
         super(table);
@@ -29,12 +33,16 @@ public class Query<T extends AnvilORMSerializable> extends Selector<T, Query<T>>
             throw new IllegalArgumentException("Columns cannot be null");
         int i = 0;
         StringBuilder sb = new StringBuilder();
+        Set<String> selected = new HashSet<>();
         for (String s : columns) {
             if (i != 0)
                 sb.append(", ");
             sb.append("`").append(s).append("`");
+            selected.add(s.toLowerCase(Locale.ROOT));
             i++;
         }
+        this.columns = sb.toString();
+        this.selectedColumns = selected;
 
         return this;
     }
@@ -75,6 +83,10 @@ public class Query<T extends AnvilORMSerializable> extends Selector<T, Query<T>>
 
             String name = column.name().equalsIgnoreCase(SqlColumn.defaultName) ? field.getName() : column.name();
 
+            if (selectedColumns != null && !selectedColumns.contains(name.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+
             field.set(t, column.type().get(rs, name, column.flags(), field.getType()));
 
         }
@@ -88,7 +100,7 @@ public class Query<T extends AnvilORMSerializable> extends Selector<T, Query<T>>
     public List<T> completeAsList() {
         return table.synchronize(() -> {
             Connection c = table.getConnection();
-            try (PreparedStatement ps = generateStatement("SELECT * FROM " + table.getTableName(), 0, new ArrayList<>(), c);
+            try (PreparedStatement ps = generateStatement("SELECT " + columns + " FROM " + table.getTableName(), 0, new ArrayList<>(), c);
                  ResultSet rs = ps.executeQuery();) {
 
                 List<T> list = new ArrayList<>();

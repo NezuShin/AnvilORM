@@ -40,15 +40,20 @@ public class ExampleAnvilORMClass implements AnvilORMSerializable {
     @SqlColumn(type = SqlType.BIGINT)
     private long timestamp;
 
+    // type is used for JDBC get/set; customType overrides the DDL column definition
+    @SqlColumn(type = SqlType.VARCHAR, customType = "VARCHAR(512)")
+    private String description;
+
 
     //There must be empty constructor for successful class deserialization
     public ExampleAnvilORMClass() {
     }
 
-    public ExampleAnvilORMClass(Material someArbitraryEnum, String userName, long timestamp) {
+    public ExampleAnvilORMClass(Material someArbitraryEnum, String userName, long timestamp, String description) {
         this.someArbitraryEnum = someArbitraryEnum;
         this.userName = userName;
         this.timestamp = timestamp;
+        this.description = description;
     }
 
     @Override
@@ -70,7 +75,7 @@ public class ExampleAnvilORMClass implements AnvilORMSerializable {
 Set up connection details and create a new table structure corresponding to our serialized class:
 
 ```java
-//CREATE TABLE IF NOT EXISTS my_table_name (`id` INT AUTO_INCREMENT PRIMARY KEY, `timestamp` BIGINT, `user_name` VARCHAR(255), `some_arbitrary_enum` VARCHAR(255));
+//CREATE TABLE IF NOT EXISTS my_table_name (`id` INT AUTO_INCREMENT PRIMARY KEY, `timestamp` BIGINT, `user_name` VARCHAR(255), `some_arbitrary_enum` VARCHAR(255), `description` VARCHAR(512));
 
 //For mysql
 AnvilORMTable<ExampleAnvilORMClass> mysqlOrmTable = AnvilORMFactory.factory().buildMysqlTable(ExampleAnvilORMClass.class, "my_table_name", "127.0.0.1", 3306, "dbname", "user", "password", true);
@@ -120,14 +125,14 @@ rowsChanged = ormTable.update().setRaw("timestamp=timestamp+?", 1L).complete();
 #### 5. Inserting Records (`INSERT INTO`)
 
 ```java
-//REPLACE INTO my_table_name (`id`,`timestamp`,`user_name`,`some_arbitrary_enum`) VALUES (?, ?, ?, ?)
-ormTable.update().replace(new ExampleAnvilORMClass(Material.STONE, "NezuShin", System.currentTimeMillis()));
+//REPLACE INTO my_table_name (`id`,`timestamp`,`user_name`,`some_arbitrary_enum`,`description`) VALUES (?, ?, ?, ?, ?)
+ormTable.update().replace(new ExampleAnvilORMClass(Material.STONE, "NezuShin", System.currentTimeMillis(), "Hello"));
 
 
-//REPLACE INTO my_table_name (`id`,`timestamp`,`user_name`,`some_arbitrary_enum`) VALUES (?, ?, ?, ?),(?, ?, ?, ?);
+//REPLACE INTO my_table_name (`id`,`timestamp`,`user_name`,`some_arbitrary_enum`,`description`) VALUES (?, ?, ?, ?, ?),(?, ?, ?, ?, ?);
 ormTable.update().replace(Lists.newArrayList(
-        new ExampleAnvilORMClass(Material.DIRT, "AnotherPerson", 1),
-        new ExampleAnvilORMClass(Material.STONE, "YetAnotherPerson", 2)
+        new ExampleAnvilORMClass(Material.DIRT, "AnotherPerson", 1, "First"),
+        new ExampleAnvilORMClass(Material.STONE, "YetAnotherPerson", 2, "Second")
         ));
 ```
 

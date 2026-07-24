@@ -94,6 +94,19 @@ public class Update<T extends AnvilORMSerializable> extends Selector<T, Update<T
     }
 
     public int replace(List<T> itemsToReplace) {
+        return insert0(itemsToReplace, "REPLACE");
+    }
+
+    public int insert(T... itemsToInsert) {
+        return insert(Arrays.asList(itemsToInsert));
+    }
+
+    public int insert(List<T> itemsToInsert) {
+        return insert0(itemsToInsert, "INSERT");
+    }
+
+
+    private int insert0(List<T> itemsToReplace, String action) {
         for (T t : itemsToReplace)
             t.onSerialize();
         if (itemsToReplace.isEmpty()) return 0;
@@ -102,7 +115,7 @@ public class Update<T extends AnvilORMSerializable> extends Selector<T, Update<T
 
                 List<PSStorage> list = new ArrayList<>();
 
-                StringBuilder sb = new StringBuilder("REPLACE INTO ").append(table.getTableName()).append(" (");
+                StringBuilder sb = new StringBuilder(action).append(" INTO ").append(table.getTableName()).append(" (");
 
                 int pointer = 0;
                 List<Entry<Field, SqlColumn>> fieldList = new ArrayList<>(table.getFields().entrySet());

@@ -1,4 +1,5 @@
 name: AnvilORM
-version: '1.0.1'
+version: '1.0.2'
 main: su.nezushin.anvil.AnvilAPI
 api-version: '1.21'
+folia-supported: true

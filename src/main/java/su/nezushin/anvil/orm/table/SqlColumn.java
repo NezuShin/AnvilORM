@@ -20,5 +20,7 @@ public @interface SqlColumn {
 	public SqlType type();
 	
 	public String name() default "-default";
+
+	public String customType() default "";
 	
 }

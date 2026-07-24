@@ -115,7 +115,8 @@ public abstract class AnvilORMTable<T extends AnvilORMSerializable> {
 
             sb.append("`").append(name).append("`").append(" ");
 
-            sb.append(c.type().getName());
+            String ddlType = c.customType().isEmpty() ? c.type().getName() : c.customType();
+            sb.append(ddlType);
 
             for (SqlFlag flag : c.flags()) {
                 sb.append(" ").append(flag.getSqlName());

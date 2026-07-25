@@ -2,11 +2,15 @@ package su.nezushin.anvil.orm.table;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
-
 import java.util.Map.Entry;
+import java.util.Set;
 
 import su.nezushin.anvil.orm.SqlFlag;
 import su.nezushin.anvil.orm.table.ex.AnvilORMRuntimeException;
@@ -98,6 +102,24 @@ public abstract class AnvilORMTable<T extends AnvilORMSerializable> {
 
     public abstract Connection getConnection();
 
+    protected String resolveColumnName(Field field, SqlColumn column) {
+        return column.name().equalsIgnoreCase(SqlColumn.defaultName) ? field.getName() : column.name();
+    }
+
+    protected String buildColumnDefinition(Field field, SqlColumn column) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("`").append(resolveColumnName(field, column)).append("`").append(" ");
+
+        String ddlType = column.customType().isEmpty() ? column.type().getName() : column.customType();
+        sb.append(ddlType);
+
+        for (SqlFlag flag : column.flags()) {
+            sb.append(" ").append(flag.getSqlName());
+        }
+
+        return sb.toString();
+    }
+
     public void createTable() {
 
         StringBuilder sb = new StringBuilder();
@@ -106,22 +128,10 @@ public abstract class AnvilORMTable<T extends AnvilORMSerializable> {
 
         int i = 0;
         for (Entry<Field, SqlColumn> s : getFields().entrySet()) {
-            Field f = s.getKey();
-            SqlColumn c = s.getValue();
-            String name = c.name().equalsIgnoreCase(SqlColumn.defaultName) ? f.getName() : c.name();
-
             if (i != 0)
                 sb.append(", ");
 
-            sb.append("`").append(name).append("`").append(" ");
-
-            String ddlType = c.customType().isEmpty() ? c.type().getName() : c.customType();
-            sb.append(ddlType);
-
-            for (SqlFlag flag : c.flags()) {
-                sb.append(" ").append(flag.getSqlName());
-            }
-
+            sb.append(buildColumnDefinition(s.getKey(), s.getValue()));
             i++;
         }
 
@@ -138,6 +148,55 @@ public abstract class AnvilORMTable<T extends AnvilORMSerializable> {
             }
         });
 
+    }
+
+    public void migrateTable() {
+        synchronize(() -> {
+            try (Connection c = getConnection()) {
+                Set<String> existingColumns = new HashSet<>();
+                DatabaseMetaData meta = c.getMetaData();
+                try (ResultSet rs = meta.getColumns(c.getCatalog(), null, tableName, null)) {
+                    while (rs.next()) {
+                        existingColumns.add(rs.getString("COLUMN_NAME").toLowerCase(Locale.ROOT));
+                    }
+                }
+
+                // Some drivers (e.g. SQLite) store/report table names with different casing
+                if (existingColumns.isEmpty()) {
+                    try (ResultSet rs = meta.getColumns(c.getCatalog(), null, tableName.toUpperCase(Locale.ROOT), null)) {
+                        while (rs.next()) {
+                            existingColumns.add(rs.getString("COLUMN_NAME").toLowerCase(Locale.ROOT));
+                        }
+                    }
+                }
+                if (existingColumns.isEmpty()) {
+                    try (ResultSet rs = meta.getColumns(c.getCatalog(), null, tableName.toLowerCase(Locale.ROOT), null)) {
+                        while (rs.next()) {
+                            existingColumns.add(rs.getString("COLUMN_NAME").toLowerCase(Locale.ROOT));
+                        }
+                    }
+                }
+
+                try (Statement s = c.createStatement()) {
+                    for (Entry<Field, SqlColumn> entry : getFields().entrySet()) {
+                        Field field = entry.getKey();
+                        SqlColumn column = entry.getValue();
+                        String name = resolveColumnName(field, column);
+
+                        if (existingColumns.contains(name.toLowerCase(Locale.ROOT)))
+                            continue;
+
+                        String sql = "ALTER TABLE " + tableName + " ADD COLUMN " + buildColumnDefinition(field, column);
+                        log(sql);
+                        s.executeUpdate(sql);
+                    }
+                }
+
+                return null;
+            } catch (Throwable e) {
+                throw new AnvilORMRuntimeException(e);
+            }
+        });
     }
 
 }

@@ -72,7 +72,9 @@ public class ExampleAnvilORMClass implements AnvilORMSerializable {
 
 #### 2. Connecting to MySQL and Creating Table
 
-Set up connection details and create a new table structure corresponding to our serialized class:
+Set up connection details and create a new table structure corresponding to our serialized class.
+
+On build, AnvilORM runs `CREATE TABLE IF NOT EXISTS`, then migrates the schema by adding any `@SqlColumn` fields that are missing from the existing table (`ALTER TABLE ... ADD COLUMN`). Columns are never dropped or renamed.
 
 ```java
 //CREATE TABLE IF NOT EXISTS my_table_name (`id` INT AUTO_INCREMENT PRIMARY KEY, `timestamp` BIGINT, `user_name` VARCHAR(255), `some_arbitrary_enum` VARCHAR(255), `description` VARCHAR(512));

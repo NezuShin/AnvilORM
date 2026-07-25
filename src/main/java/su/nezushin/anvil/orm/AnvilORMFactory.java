@@ -47,6 +47,7 @@ public class AnvilORMFactory {
 
         table.init(target, tableName);
         table.createTable();
+        table.migrateTable();
 
         return table;
     }
@@ -65,6 +66,7 @@ public class AnvilORMFactory {
         table.init(target, tableName);
 
         table.createTable();
+        table.migrateTable();
 
         return table;
     }
@@ -89,6 +91,7 @@ public class AnvilORMFactory {
         table.init(target, tableName);
 
         table.createTable();
+        table.migrateTable();
 
         return table;
     }
